@@ -1,65 +1,143 @@
-import Image from "next/image";
+"use client";
+
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { HTMLInputTypeAttribute, useState } from "react";
+
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+interface FormField {
+  id: string;
+  className?: string;
+  name: string;
+  placeholder?: string;
+  type: FormType;
+  formType: HTMLInputTypeAttribute;
+}
+
+type FormType = "INPUT" | "TEXTAREA" | "SELECT";
+interface ComponentItem {
+  type: FormType;
+  label: string;
+  formType: HTMLInputTypeAttribute;
+}
+
+const componentList: ComponentItem[] = [
+  {
+    type: "INPUT",
+    label: "Input",
+    formType: "text",
+  },
+  {
+    type: "TEXTAREA",
+    label: "Textarea",
+    formType: "text",
+  },
+  {
+    type: "SELECT",
+    label: "Select",
+    formType: "text",
+  },
+];
+
+const loginSchema = z.object({
+  email: z.string().email("Email is Required"),
+  textarea: z.string(),
+  password: z.string().trim().nonempty("ddd"),
+});
+
+export type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Home() {
+  const [fieldList, setFieldList] = useState<FormField[]>([]);
+
+  const handleAddField = (component: ComponentItem) => {
+    const uniqueId = crypto.randomUUID();
+
+    const newField: FormField = {
+      id: uniqueId,
+      name: `name_${uniqueId}`,
+      placeholder: `Enter Your ${component.label}`,
+      type: component.type,
+      formType: component.formType,
+    };
+    setFieldList((prev) => [...prev, newField]);
+  };
+
+  const form = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  function onSubmit(values: LoginForm) {}
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <>
+      <div className="grid grid-cols-[200px_1fr_1fr] gap-5 p-10">
+        <div className="flex flex-col gap-5">
+          {componentList.map((component) => (
+            <Button
+              key={component.type}
+              onClick={() => handleAddField(component)}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              {component.label}
+            </Button>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {fieldList.map((field) =>
+                field.type === "INPUT" ? (
+                  <FormField
+                    key={field.id}
+                    control={form.control}
+                    name={field.name}
+                    render={({ field }) => (
+                      <FormItem className="gap-3">
+                        <Label> {field.name} </Label>
+                        <FormControl>
+                          <Input placeholder="sample@sample.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : field.type === "TEXTAREA" ? (
+                  <FormField
+                    control={form.control}
+                    name={field.name}
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label> {field.name} </Label>
+                        <FormControl>
+                          <Textarea className="resize-none" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : null
+              )}
+            </form>
+          </Form>
         </div>
-      </main>
-    </div>
+        <div className="">Generate Code</div>
+      </div>
+    </>
   );
 }
