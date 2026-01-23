@@ -22,6 +22,12 @@ const importGenerator = (fields: FormField[]) => {
 
         case FieldTypeEnum.SELECT:
           return `import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from '@/components/ui/select';`;
+
+        case FieldTypeEnum.DATEPICKER:
+          return `import { DatePickerInput } from "@/components/date-picker";`;
+
+        default:
+          return "";
       }
     })
     .join("\n");

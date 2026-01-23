@@ -54,6 +54,11 @@ const zodGenerator = (fields: FormField[]): string => {
               : line + `.string().optional()`;
         }
 
+      case FieldTypeEnum.DATEPICKER:
+        return field.required
+          ? `  ${field.name}: z.string().nonempty("${field.label} is required")`
+          : `  ${field.name}: z.string().optional()`;
+
       default:
         return field.required
           ? `  ${field.name}: z.string().nonempty("${field.label} is required")`

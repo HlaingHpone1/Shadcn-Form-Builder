@@ -1,14 +1,16 @@
+import defaultValuesGenerator from "@/templates/form/generators/DefaultValuesGenerator";
 import fieldGenerator from "@/templates/form/generators/FieldGenerator";
 import importGenerator from "@/templates/form/generators/import-generator";
 import zodGenerator from "@/templates/form/generators/ZodGenerator";
 
 export const generateCode = (
   fields: FormField[],
-  componentInfo: ComponentInfo
+  componentInfo: ComponentInfo,
 ) => {
   const zodSchema = zodGenerator(fields);
   const jsxFields = fieldGenerator(fields);
   const header = importGenerator(fields);
+  const defaultValues = defaultValuesGenerator(fields);
 
   return `
 import { useForm } from "react-hook-form"
@@ -41,6 +43,9 @@ export type ${componentInfo.schemaType} = z.infer<typeof ${componentInfo.schemaN
 export function ${componentInfo.functionName}() {
   const form = useForm<${componentInfo.schemaType}>({
     resolver: zodResolver(${componentInfo.schemaName}),
+    defaultValues: {
+      ${defaultValues}
+    },
   })
 
   function onSubmit(values: ${componentInfo.schemaType}) {

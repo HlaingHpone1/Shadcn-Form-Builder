@@ -110,7 +110,7 @@ export default function FormBuilder() {
               <PreviewTab fields={fields} />
             ) : (
               <div className="relative">
-                <pre className="bg-slate-950 text-slate-50 p-4 rounded-lg text-sm overflow-auto font-mono h-[600px]">
+                <pre className="bg-slate-950 text-slate-50 p-4 rounded-lg text-sm overflow-auto font-mono h-150">
                   {generateCode(fields, componentInfo)}
                 </pre>
                 <Button
@@ -119,7 +119,7 @@ export default function FormBuilder() {
                   className="absolute top-4 right-4"
                   onClick={async () => {
                     await navigator.clipboard.writeText(
-                      generateCode(fields, componentInfo)
+                      generateCode(fields, componentInfo),
                     );
                   }}
                 >

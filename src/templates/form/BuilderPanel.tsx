@@ -50,7 +50,7 @@ const BuilderPanel = ({
 
   const updateField = (id: string, updates: Partial<FormField>) => {
     setFields((prev) =>
-      prev.map((field) => (field.id === id ? { ...field, ...updates } : field))
+      prev.map((field) => (field.id === id ? { ...field, ...updates } : field)),
     );
   };
 
@@ -121,7 +121,7 @@ const BuilderPanel = ({
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-muted-foreground mb-2">
                       Label (
                       <h1 className="capitalize text-xs">{field.type}</h1>)
                     </Label>
@@ -134,7 +134,7 @@ const BuilderPanel = ({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-muted-foreground mb-2">
                       Database key
                     </Label>
                     <Input
@@ -208,7 +208,7 @@ const BuilderPanel = ({
                             onChange={(e) =>
                               handleValidationChange(
                                 "min",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                           />
@@ -220,7 +220,7 @@ const BuilderPanel = ({
                             onChange={(e) =>
                               handleValidationChange(
                                 "max",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                           />
@@ -242,7 +242,7 @@ const BuilderPanel = ({
                                 "min",
                                 e.target.value
                                   ? Number(e.target.value)
-                                  : undefined
+                                  : undefined,
                               )
                             }
                           />
@@ -262,12 +262,12 @@ const BuilderPanel = ({
                                   <Checkbox
                                     id={rule.id}
                                     checked={field.validation?.patterns?.includes(
-                                      rule.id
+                                      rule.id,
                                     )}
                                     onCheckedChange={(checked) =>
                                       handlePatternToggle(
                                         rule.id,
-                                        checked as boolean
+                                        checked as boolean,
                                       )
                                     }
                                   />

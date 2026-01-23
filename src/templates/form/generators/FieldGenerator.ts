@@ -12,8 +12,10 @@ const fieldGenerator = (fields: FormField[]): string => {
                   render={({field}) => (
                     <FormItem>
                     <FormLabel>${f.label} ${
-            f.required ? ` <span className="text-red-500">*</span>` : ""
-          } </FormLabel>
+                      f.required
+                        ? ` <span className="text-red-500">*</span>`
+                        : ""
+                    } </FormLabel>
                       {data
                         .map((item) =>
                           <div key={item.id} className="flex items-center gap-2">
@@ -59,8 +61,10 @@ const fieldGenerator = (fields: FormField[]): string => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>${f.label} ${
-            f.required ? ` <span className="text-red-500">*</span>` : ""
-          } </FormLabel>
+                            f.required
+                              ? ` <span className="text-red-500">*</span>`
+                              : ""
+                          } </FormLabel>
                           <FormControl>
                             <Textarea placeholder="${
                               f.label
@@ -83,8 +87,10 @@ const fieldGenerator = (fields: FormField[]): string => {
                     <FormItem className="gap-3">
                       <FormLabel>
                         ${f.label}${
-                f.required ? ` <span className="text-red-500">*</span>` : ""
-              }
+                          f.required
+                            ? ` <span className="text-red-500">*</span>`
+                            : ""
+                        }
                       </FormLabel>
                       <FormControl>
                         <PasswordInput
@@ -106,8 +112,10 @@ const fieldGenerator = (fields: FormField[]): string => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>${f.label} ${
-            f.required ? ` <span className="text-red-500">*</span>` : ""
-          } </FormLabel>
+                        f.required
+                          ? ` <span className="text-red-500">*</span>`
+                          : ""
+                      } </FormLabel>
                       <FormControl>
                         <Input placeholder="${f.label}..."
                           type="${f.formType ?? "text"}"
@@ -126,8 +134,10 @@ const fieldGenerator = (fields: FormField[]): string => {
               render={({ field }) => (
                 <FormItem>
                     <FormLabel>${f.label} ${
-            f.required ? ` <span className="text-red-500">*</span>` : ""
-          } </FormLabel>
+                      f.required
+                        ? ` <span className="text-red-500">*</span>`
+                        : ""
+                    } </FormLabel>
                   <Select
                     onValueChange={(value) =>
                       field.onChange(value ? Number(value) : undefined)
@@ -156,6 +166,34 @@ const fieldGenerator = (fields: FormField[]): string => {
               )}
             />
           `;
+
+        case FieldTypeEnum.DATEPICKER:
+          return `
+          <FormField
+          control={form.control}
+          name="${f.name}"
+          render={({ field }) => {
+            const { value, onChange, ...rest } = field;
+            return (
+              <FormItem className="flex flex-col">
+                <FormLabel>${f.label} ${
+                  f.required ? ` <span className="text-red-500">*</span>` : ""
+                } </FormLabel>
+                <FormControl>
+                  <DatePickerInput
+                    value={value ? new Date(value) : undefined}
+                    onChange={(date) => onChange(date ? date.toISOString() : undefined)}
+                    {...rest}
+                    placeholder="${f.label}..."
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+          `;
+
         default:
           return "";
       }

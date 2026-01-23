@@ -1,3 +1,4 @@
+import { DatePickerInput } from "@/components/date-picker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -71,6 +72,15 @@ const PreviewTab = ({ fields }: { fields: FormField[] }) => {
                 ))}
               </SelectContent>
             </Select>
+          )}
+
+          {f.type === FieldTypeEnum.DATEPICKER && (
+            <DatePickerInput
+              value={new Date()}
+              onChange={() => {}}
+              placeholder={f.label}
+              className="w-full"
+            />
           )}
         </div>
       ))}
