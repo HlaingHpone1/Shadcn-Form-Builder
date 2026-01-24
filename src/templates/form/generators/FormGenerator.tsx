@@ -13,6 +13,8 @@ export const generateCode = (
   const defaultValues = defaultValuesGenerator(fields);
 
   return `
+"use client"
+
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -40,7 +42,7 @@ export type ${componentInfo.schemaType} = z.infer<typeof ${componentInfo.schemaN
     { id: 3, name: "Option 3" },
   ];
 
-export function ${componentInfo.functionName}() {
+export default function ${componentInfo.functionName}() {
   const form = useForm<${componentInfo.schemaType}>({
     resolver: zodResolver(${componentInfo.schemaName}),
     defaultValues: {

@@ -1,3 +1,5 @@
+"use client";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -25,7 +27,7 @@ const data: { id: number; name: string }[] = [
   { id: 3, name: "Option 3" },
 ];
 
-export function MyGeneratedForm() {
+export default function Test() {
   const form = useForm<MyFormType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -68,4 +70,4 @@ export function MyGeneratedForm() {
       </form>
     </Form>
   );
-}
+};
