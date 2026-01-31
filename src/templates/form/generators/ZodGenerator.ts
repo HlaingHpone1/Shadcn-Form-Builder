@@ -34,7 +34,7 @@ const zodGenerator = (fields: FormField[]): string => {
                 if (rule) {
                   schemaString +=
                     `.regex(new RegExp("${rule.regex.source}"), "${rule.message}")`.concat(
-                      "\n"
+                      "\n",
                     );
                 }
               });
@@ -58,6 +58,27 @@ const zodGenerator = (fields: FormField[]): string => {
         return field.required
           ? `  ${field.name}: z.string().nonempty("${field.label} is required")`
           : `  ${field.name}: z.string().optional()`;
+
+      case FieldTypeEnum.CHECKBOX:
+        return field.required
+          ? `  ${field.name}: z.string().nonempty("${field.label} is required")`
+          : `  ${field.name}: z.string().optional()`;
+
+      case FieldTypeEnum.SELECT:
+        return field.required
+          ? `${field.name}: z.number({error: "${field.label} is required"})`
+          : `${field.name}: z.number().optional()`;
+
+      case FieldTypeEnum.COMBOBOX:
+        if (field.isMulti) {
+          return field.required
+            ? `${field.name}: z.array(z.string()).nonempty("${field.label} is required"),`
+            : `${field.name}: z.array(z.string()).optional()`;
+        }
+
+        return field.required
+          ? `${field.name}: z.string().nonempty("${field.label} is required")`
+          : `${field.name}: z.string().optional()`;
 
       default:
         return field.required

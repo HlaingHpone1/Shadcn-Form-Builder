@@ -1,6 +1,19 @@
 import { DatePickerInput } from "@/components/date-picker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -13,14 +26,57 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldTypeEnum } from "@/constants";
+import { useState } from "react";
 
-const data: { id: number; name: string }[] = [
+type Item =  { id: number; name: string }
+const data:Item[] = [
   { id: 1, name: "Option 1" },
   { id: 2, name: "Option 2" },
   { id: 3, name: "Option 3" },
 ];
 
+const MultiComboboxPreview = ({ field }: { field: FormField }) => {
+  const anchorRef = useComboboxAnchor();  
+  const [selectedItems, setSelectedItems] = useState<Item[]>([]);
+
+  return (
+    <div ref={anchorRef} className="w-full">
+      <Combobox
+        items={data}
+        multiple
+        autoHighlight
+        itemToStringLabel={(item) => item.name}
+        onValueChange={(selectedObjects: Item[]) => {
+          setSelectedItems(selectedObjects);
+        }}
+      >
+        <ComboboxChips className="flex flex-wrap gap-2 p-2 w-full border rounded-md">
+          <ComboboxValue>
+            {selectedItems.map((item) => (
+              <ComboboxChip key={item.id} className="max-w-fit">
+                {item.name}
+              </ComboboxChip>
+            ))}
+          </ComboboxValue>
+          <ComboboxChipsInput className="flex-1 min-w-30" placeholder={`${field.label}...`} />
+        </ComboboxChips>
+        <ComboboxContent anchor={anchorRef} align="start">
+          <ComboboxEmpty>No items found.</ComboboxEmpty>
+          <ComboboxList>
+            {(item) => (
+              <ComboboxItem key={item.id} value={item}>
+                {item.name}
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    </div>
+  );
+};
+
 const PreviewTab = ({ fields }: { fields: FormField[] }) => {
+
   return (
     <div className="max-w-2xl mx-auto space-y-4 py-4">
       <div className="sticky top-0 bg-white z-10 pb-4 border-b mb-4">
@@ -93,6 +149,34 @@ const PreviewTab = ({ fields }: { fields: FormField[] }) => {
                   placeholder={f.label}
                   className="w-full h-9"
                 />
+              )}
+
+              {f.type === FieldTypeEnum.COMBOBOX && !f.isMulti && (
+                <Combobox
+                  items={data}
+                  itemToStringValue={(item: Item) => (item ? item.id.toString() : "")}
+                  itemToStringLabel={(item) => (item ? item.name : "")}
+                >
+                  <ComboboxInput 
+                    placeholder={f.label} 
+                    className="h-9" 
+                    showClear
+                  />
+                  <ComboboxContent>
+                    <ComboboxEmpty>No items found.</ComboboxEmpty>
+                    <ComboboxList>
+                      {(item) => (
+                        <ComboboxItem key={item.id} value={item}>
+                          {item.name}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              )}
+
+              {f.type === FieldTypeEnum.COMBOBOX && f.isMulti && (
+                <MultiComboboxPreview field={f} />
               )}
             </div>
           ))}

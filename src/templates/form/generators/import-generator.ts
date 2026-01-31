@@ -4,7 +4,7 @@ const importGenerator = (fields: FormField[]) => {
   return fields
     .filter(
       (field, index, self) =>
-        index === self.findIndex((t) => t.type === field.type)
+        index === self.findIndex((t) => t.type === field.type),
     )
     .map((f) => {
       switch (f.type) {
@@ -26,9 +26,31 @@ const importGenerator = (fields: FormField[]) => {
         case FieldTypeEnum.DATEPICKER:
           return `import { DatePickerInput } from "@/components/date-picker";`;
 
+        case FieldTypeEnum.COMBOBOX:
+          // Check all combobox fields to see if both single and multi exist
+          const comboboxFields = fields.filter((field) => field.type === FieldTypeEnum.COMBOBOX);
+          const hasSingle = comboboxFields.some((field) => !field.isMulti);
+          const hasMulti = comboboxFields.some((field) => field.isMulti);
+
+          // Build combined imports if both types exist
+          const imports = ["Combobox"];
+          if (hasSingle) {
+            imports.push("ComboboxContent", "ComboboxEmpty", "ComboboxInput", "ComboboxItem", "ComboboxList");
+          }
+          if (hasMulti) {
+            imports.push("ComboboxChip", "ComboboxChips", "ComboboxChipsInput", "ComboboxContent", "ComboboxEmpty", "ComboboxItem", "ComboboxList", "ComboboxValue", "useComboboxAnchor");
+          }
+
+          // Remove duplicates and sort
+          const uniqueImports = Array.from(new Set(imports)).sort();
+          return `import {
+  ${uniqueImports.join(",\n  ")},
+} from "@/components/ui/combobox";`;
+
         default:
           return "";
       }
+      
     })
     .join("\n");
 };

@@ -194,6 +194,108 @@ const fieldGenerator = (fields: FormField[]): string => {
         />
           `;
 
+        case FieldTypeEnum.COMBOBOX:
+          if (f.isMulti) {
+            return `
+                    <FormField
+          control={form.control}
+          name="${f.name}"
+          render={({ field }) => {
+            const selectedItems = data.filter((item) =>
+              field.value?.includes(item.id.toString()),
+            );
+
+            return (
+              <FormItem className="flex flex-col">
+               <FormLabel>${f.label}
+      ${f.required ? ` <span className="text-red-500">*</span>` : ""}
+      </FormLabel>
+                <FormControl>
+                  <div ref={anchorRef} className="w-full">
+                    <Combobox
+                      items={data}
+                      multiple
+                      autoHighlight
+                      itemToStringLabel={(item) => item.name}
+                      onValueChange={(selectedObjects: Item[]) => {
+                        const ids = selectedObjects.map((obj) =>
+                          obj.id.toString(),
+                        );
+                        field.onChange(ids);
+                      }}
+                    >
+                      <ComboboxChips className="flex flex-wrap gap-2 p-2 w-full border rounded-md">
+                        <ComboboxValue>
+                          {selectedItems.map((item) => (
+                            <ComboboxChip key={item.id} className="max-w-fit">
+                              {item.name}
+                            </ComboboxChip>
+                          ))}
+                        </ComboboxValue>
+                        <ComboboxChipsInput className="flex-1 min-w-30" placeholder="${f.label}..." />
+                      </ComboboxChips>
+                      <ComboboxContent anchor={anchorRef} align="start">
+                        <ComboboxEmpty>No items found.</ComboboxEmpty>
+                        <ComboboxList>
+                          {(item) => (
+                            <ComboboxItem key={item.id} value={item}>
+                              {item.name}
+                            </ComboboxItem>
+                          )}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+            `;
+          }
+          return `
+          <FormField
+  control={form.control}
+  name="${f.name}"
+  render={({ field }) => (
+    <FormItem className="flex flex-col">
+      <FormLabel>${f.label}
+      ${f.required ? ` <span className="text-red-500">*</span>` : ""}
+      </FormLabel>
+      
+      <FormControl>
+        <Combobox
+          items={data}
+          itemToStringValue={(data) => data.id.toString()}
+          itemToStringLabel={(data: Item) => data.name}
+          onValueChange={(value) =>
+            field.onChange(value ? value.id.toString() : undefined)
+          }>
+              <ComboboxInput
+                placeholder="Select the New Label"
+                ref={field.ref}
+                showClear
+              />
+              <ComboboxContent>
+                <ComboboxEmpty>No items found.</ComboboxEmpty>
+                <ComboboxList>
+                  {(item) => (
+                    <ComboboxItem key={item.id} value={item}>
+                      {item.name}
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+              </ComboboxContent>
+        </Combobox>
+      </FormControl>
+      
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+          `;
+
         default:
           return "";
       }

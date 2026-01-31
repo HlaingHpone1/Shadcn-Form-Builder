@@ -16,6 +16,7 @@ interface FormField {
   required: boolean;
   formType?: HTMLInputTypeAttribute;
   validation?: ValidationRules;
+  isMulti?: boolean;
 }
 
 type ValidationRules = {

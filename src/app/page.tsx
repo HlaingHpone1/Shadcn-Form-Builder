@@ -28,12 +28,10 @@ export default function FormBuilder() {
 
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
 
-  // Helper to get currently selected field object
   const selectedField = fields.find((f) => f.id === selectedFieldId) ?? null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Top Bar - Sticky */}
       <div className="sticky top-0 z-10 bg-white border-b shadow-sm px-6 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Form Builder</h1>

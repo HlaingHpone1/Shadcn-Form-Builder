@@ -37,6 +37,7 @@ const BuilderPanel = ({
         name: `field_${fields.length + 1}`,
         label: "New Label",
         type,
+        isMulti: false,
         required: false,
         formType: type === FieldTypeEnum.NUMBER ? "number" : "text",
       },
@@ -223,6 +224,24 @@ const BuilderPanel = ({
                   Required Field
                 </Label>
               </div>
+
+              {selectedField.type === "COMBOBOX" && (
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id={`req-${selectedField.id}`}
+                    checked={selectedField.isMulti}
+                    onCheckedChange={(c) =>
+                      updateField(selectedField.id, { isMulti: c })
+                    }
+                  />
+                  <Label
+                    htmlFor={`req-${selectedField.id}`}
+                    className="text-sm"
+                  >
+                    Multi
+                  </Label>
+                </div>
+              )}
 
               {selectedField.type === FieldTypeEnum.TEXT && (
                 <div>
