@@ -17,6 +17,7 @@ interface FormField {
   formType?: HTMLInputTypeAttribute;
   validation?: ValidationRules;
   isMulti?: boolean;
+  styleType?: "radix-ui" | "base-ui";
 }
 
 type ValidationRules = {

@@ -1,9 +1,10 @@
-"use client";
+"use client"
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import * as React from 'react'
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -11,7 +12,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form"
 
 import {
   Combobox,
@@ -26,13 +27,29 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/utils";
 
 const formSchema = z.object({
-  field_1: z.string().optional(),
-  field_2: z.array(z.string()).optional(),
-});
+field_1: z.string().optional(),
+field_2: z.string().optional(),
+field_3: z.array(z.string()).optional()
+})
 
-export type MyFormType = z.infer<typeof formSchema>;
+export type MyFormType = z.infer<typeof formSchema>
 
 type Item = { id: number; name: string };
 
@@ -46,65 +63,139 @@ export default function MyGeneratedForm() {
   const form = useForm<MyFormType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      field_1: "",
-      field_2: [],
+          field_1: "",
+    field_2: "",
+    field_3: []
     },
-  });
+  })
 
   const anchorRef = useComboboxAnchor();
 
   function onSubmit(values: MyFormType) {
-    console.log(values);
+    console.log(values)
   }
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 max-w-xl"
-      >
-        <FormField
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+          <FormField
+  control={form.control}
+  name="field_1"
+  render={({ field }) => {
+    const selectedItem = data.find((item) => item.id.toString() === field.value);
+
+    return (
+      <FormItem className="flex flex-col">
+        <FormLabel>New Label
+        
+        </FormLabel>
+        <Popover modal>
+          <PopoverTrigger asChild>
+            <FormControl>
+              <Button
+                variant="outline"
+                role="combobox"
+                type="button"
+                className={cn(
+                  'h-9 w-full justify-between truncate',
+                  !field.value && 'text-muted-foreground'
+                )}
+              >
+                {field.value
+                  ? selectedItem?.name
+                  : "New Label"}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </FormControl>
+          </PopoverTrigger>
+          <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
+            <Command>
+              <CommandInput
+                placeholder="Search..."
+              />
+              <CommandList>
+                <CommandEmpty>No items found.</CommandEmpty>
+                <CommandGroup>
+                  {data.map((item) => (
+                    <CommandItem
+                      value={item.id.toString()}
+                      key={item.id}
+                      onSelect={() => {
+                        if (item.id.toString() === field.value) {
+                          field.onChange(undefined);
+                        } else {
+                          field.onChange(item.id.toString());
+                        }
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          item.id.toString() === field.value
+                            ? 'opacity-100'
+                            : 'opacity-0'
+                        )}
+                      />
+                      {item.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        <FormMessage />
+      </FormItem>
+    );
+  }}
+/>
+          
+
+          <FormField
+  control={form.control}
+  name="field_2"
+  render={({ field }) => (
+    <FormItem className="flex flex-col">
+      <FormLabel>New Label
+      
+      </FormLabel>
+      
+      <FormControl>
+        <Combobox
+          items={data}
+          itemToStringValue={(data) => data.id.toString()}
+          itemToStringLabel={(data: Item) => data.name}
+          onValueChange={(value) =>
+            field.onChange(value ? value.id.toString() : undefined)
+          }>
+              <ComboboxInput
+                placeholder="New Label"
+                ref={field.ref}
+                showClear
+              />
+              <ComboboxContent>
+                <ComboboxEmpty>No items found.</ComboboxEmpty>
+                <ComboboxList>
+                  {(item) => (
+                    <ComboboxItem key={item.id} value={item}>
+                      {item.name}
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+              </ComboboxContent>
+        </Combobox>
+      </FormControl>
+      
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+          
+
+                    <FormField
           control={form.control}
-          name="field_1"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>New Label</FormLabel>
-
-              <FormControl>
-                <Combobox
-                  items={data}
-                  itemToStringValue={(data) => data.id.toString()}
-                  itemToStringLabel={(data: Item) => data.name}
-                  onValueChange={(value) =>
-                    field.onChange(value ? value.id.toString() : undefined)
-                  }
-                >
-                  <ComboboxInput
-                    placeholder="Select the New Label"
-                    ref={field.ref}
-                    showClear
-                  />
-                  <ComboboxContent>
-                    <ComboboxEmpty>No items found.</ComboboxEmpty>
-                    <ComboboxList>
-                      {(item) => (
-                        <ComboboxItem key={item.id} value={item}>
-                          {item.name}
-                        </ComboboxItem>
-                      )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-              </FormControl>
-
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="field_2"
+          name="field_3"
           render={({ field }) => {
             const selectedItems = data.filter((item) =>
               field.value?.includes(item.id.toString()),
@@ -112,7 +203,9 @@ export default function MyGeneratedForm() {
 
             return (
               <FormItem className="flex flex-col">
-                <FormLabel>New Label</FormLabel>
+               <FormLabel>New Label
+      
+      </FormLabel>
                 <FormControl>
                   <div ref={anchorRef} className="w-full">
                     <Combobox
@@ -135,10 +228,7 @@ export default function MyGeneratedForm() {
                             </ComboboxChip>
                           ))}
                         </ComboboxValue>
-                        <ComboboxChipsInput
-                          className="flex-1 min-w-30"
-                          placeholder="New Label..."
-                        />
+                        <ComboboxChipsInput className="flex-1 min-w-30" placeholder="New Label..." />
                       </ComboboxChips>
                       <ComboboxContent anchor={anchorRef} align="start">
                         <ComboboxEmpty>No items found.</ComboboxEmpty>
@@ -158,9 +248,9 @@ export default function MyGeneratedForm() {
             );
           }}
         />
-
+            
         <Button type="submit">Submit</Button>
       </form>
     </Form>
-  );
+  )
 }

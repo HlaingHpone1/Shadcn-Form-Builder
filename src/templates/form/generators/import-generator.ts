@@ -27,25 +27,50 @@ const importGenerator = (fields: FormField[]) => {
           return `import { DatePickerInput } from "@/components/date-picker";`;
 
         case FieldTypeEnum.COMBOBOX:
-          // Check all combobox fields to see if both single and multi exist
+          // Check all combobox fields to see if both single and multi exist, and which library
           const comboboxFields = fields.filter((field) => field.type === FieldTypeEnum.COMBOBOX);
           const hasSingle = comboboxFields.some((field) => !field.isMulti);
           const hasMulti = comboboxFields.some((field) => field.isMulti);
+          const hasBaseUI = comboboxFields.some((field) => (field.styleType || "base-ui") === "base-ui");
+          const hasRadixUI = comboboxFields.some((field) => field.styleType === "radix-ui");
 
-          // Build combined imports if both types exist
-          const imports = ["Combobox"];
-          if (hasSingle) {
-            imports.push("ComboboxContent", "ComboboxEmpty", "ComboboxInput", "ComboboxItem", "ComboboxList");
+          const importStatements: string[] = [];
+          
+          // Base UI imports
+          if (hasBaseUI) {
+            const baseImports = ["Combobox"];
+            if (hasSingle) {
+              baseImports.push("ComboboxContent", "ComboboxEmpty", "ComboboxInput", "ComboboxItem", "ComboboxList");
+            }
+            if (hasMulti) {
+              baseImports.push("ComboboxChip", "ComboboxChips", "ComboboxChipsInput", "ComboboxContent", "ComboboxEmpty", "ComboboxItem", "ComboboxList", "ComboboxValue", "useComboboxAnchor");
+            }
+            const baseUnique = Array.from(new Set(baseImports)).sort();
+            importStatements.push(`import {
+  ${baseUnique.join(",\n  ")},
+} from "@/components/ui/combobox";`);
           }
-          if (hasMulti) {
-            imports.push("ComboboxChip", "ComboboxChips", "ComboboxChipsInput", "ComboboxContent", "ComboboxEmpty", "ComboboxItem", "ComboboxList", "ComboboxValue", "useComboboxAnchor");
+          
+          // Radix UI imports (Popover + Command pattern)
+          if (hasRadixUI) {
+            importStatements.push(`import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/utils";`);
           }
-
-          // Remove duplicates and sort
-          const uniqueImports = Array.from(new Set(imports)).sort();
-          return `import {
-  ${uniqueImports.join(",\n  ")},
-} from "@/components/ui/combobox";`;
+          
+          return importStatements.join("\n");
 
         default:
           return "";

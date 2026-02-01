@@ -38,6 +38,7 @@ const BuilderPanel = ({
         label: "New Label",
         type,
         isMulti: false,
+        styleType: type === "COMBOBOX" ? "base-ui" : "radix-ui",
         required: false,
         formType: type === FieldTypeEnum.NUMBER ? "number" : "text",
       },
@@ -148,7 +149,7 @@ const BuilderPanel = ({
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs text-muted-foreground capitalize">
-                          {field.type.toLowerCase()}
+                          {field.type.toLowerCase()} {field.styleType}
                         </span>
                         {field.formType && field.formType !== "text" && (
                           <>
@@ -226,21 +227,45 @@ const BuilderPanel = ({
               </div>
 
               {selectedField.type === "COMBOBOX" && (
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id={`req-${selectedField.id}`}
-                    checked={selectedField.isMulti}
-                    onCheckedChange={(c) =>
-                      updateField(selectedField.id, { isMulti: c })
-                    }
-                  />
-                  <Label
-                    htmlFor={`req-${selectedField.id}`}
-                    className="text-sm"
-                  >
-                    Multi
-                  </Label>
-                </div>
+                <>
+                  {selectedField.styleType === "base-ui" && (
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id={`req-${selectedField.id}`}
+                        checked={selectedField.isMulti}
+                        onCheckedChange={(c) =>
+                          updateField(selectedField.id, { isMulti: c })
+                        }
+                      />
+                      <Label
+                        htmlFor={`req-${selectedField.id}`}
+                        className="text-sm"
+                      >
+                        Multi
+                      </Label>
+                    </div>
+                  )}
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1.5 block">
+                      Combobox Type
+                    </Label>
+                    <Select
+                      value={selectedField.styleType ?? "radix-ui"}
+                      onValueChange={(value: "base-ui" | "radix-ui") =>
+                        updateField(selectedField.id, { styleType: value })
+                      }
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="base-ui">Base UI</SelectItem>
+                        <SelectItem value="radix-ui">Radix UI</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
               )}
 
               {selectedField.type === FieldTypeEnum.TEXT && (

@@ -14,6 +14,19 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -27,16 +40,74 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { FieldTypeEnum } from "@/constants";
 import { useState } from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/utils";
 
-type Item =  { id: number; name: string }
-const data:Item[] = [
+type Item = { id: number; name: string };
+const data: Item[] = [
   { id: 1, name: "Option 1" },
   { id: 2, name: "Option 2" },
   { id: 3, name: "Option 3" },
 ];
 
+const RadixComboboxPreview = ({ field }: { field: FormField }) => {
+  const [selectedValue, setSelectedValue] = useState<string | undefined>(
+    undefined,
+  );
+
+  return (
+    <Popover modal>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          type="button"
+          className={cn(
+            "h-9 w-full justify-between truncate",
+            !selectedValue && "text-muted-foreground",
+          )}
+        >
+          {selectedValue
+            ? data.find((item) => item.id.toString() === selectedValue)?.name
+            : field.label}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+        <Command>
+          <CommandInput placeholder="Search..." />
+          <CommandList>
+            <CommandEmpty>No items found.</CommandEmpty>
+            <CommandGroup>
+              {data.map((item) => (
+                <CommandItem
+                  value={item.id.toString()}
+                  key={item.id}
+                  onSelect={(currentValue) => {
+                    setSelectedValue(currentValue);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      item.id.toString() === selectedValue
+                        ? "opacity-100"
+                        : "opacity-0",
+                    )}
+                  />
+                  {item.name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 const MultiComboboxPreview = ({ field }: { field: FormField }) => {
-  const anchorRef = useComboboxAnchor();  
+  const anchorRef = useComboboxAnchor();
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
 
   return (
@@ -58,7 +129,10 @@ const MultiComboboxPreview = ({ field }: { field: FormField }) => {
               </ComboboxChip>
             ))}
           </ComboboxValue>
-          <ComboboxChipsInput className="flex-1 min-w-30" placeholder={`${field.label}...`} />
+          <ComboboxChipsInput
+            className="flex-1 min-w-30"
+            placeholder={`${field.label}...`}
+          />
         </ComboboxChips>
         <ComboboxContent anchor={anchorRef} align="start">
           <ComboboxEmpty>No items found.</ComboboxEmpty>
@@ -76,7 +150,6 @@ const MultiComboboxPreview = ({ field }: { field: FormField }) => {
 };
 
 const PreviewTab = ({ fields }: { fields: FormField[] }) => {
-
   return (
     <div className="max-w-2xl mx-auto space-y-4 py-4">
       <div className="sticky top-0 bg-white z-10 pb-4 border-b mb-4">
@@ -96,17 +169,27 @@ const PreviewTab = ({ fields }: { fields: FormField[] }) => {
           {fields.map((f) => (
             <div key={f.id} className="grid w-full items-center gap-1.5">
               <Label htmlFor={f.name} className="text-sm">
-                {f.label} {f.required && <span className="text-red-500">*</span>}
+                {f.label}{" "}
+                {f.required && <span className="text-red-500">*</span>}
               </Label>
               {f.type === FieldTypeEnum.TEXT && f.formType !== "password" && (
                 <Input id={f.name} placeholder={f.label} className="h-9" />
               )}
 
               {f.type === FieldTypeEnum.TEXT && f.formType === "password" && (
-                <PasswordInput id={f.name} placeholder={f.label} type="password" className="h-9" />
+                <PasswordInput
+                  id={f.name}
+                  placeholder={f.label}
+                  type="password"
+                  className="h-9"
+                />
               )}
               {f.type === FieldTypeEnum.TEXTAREA && (
-                <Textarea id={f.name} placeholder={f.label} className="min-h-[80px]" />
+                <Textarea
+                  id={f.name}
+                  placeholder={f.label}
+                  className="min-h-[80px]"
+                />
               )}
               {f.type === FieldTypeEnum.CHECKBOX && (
                 <div className="space-y-3 py-2">
@@ -152,27 +235,35 @@ const PreviewTab = ({ fields }: { fields: FormField[] }) => {
               )}
 
               {f.type === FieldTypeEnum.COMBOBOX && !f.isMulti && (
-                <Combobox
-                  items={data}
-                  itemToStringValue={(item: Item) => (item ? item.id.toString() : "")}
-                  itemToStringLabel={(item) => (item ? item.name : "")}
-                >
-                  <ComboboxInput 
-                    placeholder={f.label} 
-                    className="h-9" 
-                    showClear
-                  />
-                  <ComboboxContent>
-                    <ComboboxEmpty>No items found.</ComboboxEmpty>
-                    <ComboboxList>
-                      {(item) => (
-                        <ComboboxItem key={item.id} value={item}>
-                          {item.name}
-                        </ComboboxItem>
-                      )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
+                <>
+                  {f.styleType === "radix-ui" ? (
+                    <RadixComboboxPreview field={f} />
+                  ) : (
+                    <Combobox
+                      items={data}
+                      itemToStringValue={(item: Item) =>
+                        item ? item.id.toString() : ""
+                      }
+                      itemToStringLabel={(item) => (item ? item.name : "")}
+                    >
+                      <ComboboxInput
+                        placeholder={f.label}
+                        className="h-9"
+                        showClear
+                      />
+                      <ComboboxContent>
+                        <ComboboxEmpty>No items found.</ComboboxEmpty>
+                        <ComboboxList>
+                          {(item) => (
+                            <ComboboxItem key={item.id} value={item}>
+                              {item.name}
+                            </ComboboxItem>
+                          )}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                  )}
+                </>
               )}
 
               {f.type === FieldTypeEnum.COMBOBOX && f.isMulti && (

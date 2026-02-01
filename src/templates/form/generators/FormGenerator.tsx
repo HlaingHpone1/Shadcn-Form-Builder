@@ -17,6 +17,11 @@ export const generateCode = (
   const hasMultiCombobox = fields.some(
     (field) => field.type === FieldTypeEnum.COMBOBOX && field.isMulti,
   );
+  
+  // Check if any combobox field uses Radix UI (needs React import for useState)
+  const hasRadixCombobox = fields.some(
+    (field) => field.type === FieldTypeEnum.COMBOBOX && field.styleType === "radix-ui"
+  );
 
   return `
 "use client"
@@ -24,6 +29,7 @@ export const generateCode = (
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+${hasRadixCombobox ? "import * as React from 'react'" : ""}
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -58,7 +64,7 @@ export default function ${componentInfo.functionName}() {
     },
   })
 
-  ${hasMultiCombobox ? "const anchorRef = useComboboxAnchor();" : ""}  
+  ${hasMultiCombobox ? "const anchorRef = useComboboxAnchor();" : ""}
 
   function onSubmit(values: ${componentInfo.schemaType}) {
     console.log(values)

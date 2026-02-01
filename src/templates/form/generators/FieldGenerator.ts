@@ -195,6 +195,9 @@ const fieldGenerator = (fields: FormField[]): string => {
           `;
 
         case FieldTypeEnum.COMBOBOX:
+          const comboboxType = f.styleType ?? "base-ui";
+          const isRadix = comboboxType === "radix-ui";
+
           if (f.isMulti) {
             return `
                     <FormField
@@ -254,6 +257,82 @@ const fieldGenerator = (fields: FormField[]): string => {
         />
             `;
           }
+          if (isRadix) {
+            return `
+          <FormField
+  control={form.control}
+  name="${f.name}"
+  render={({ field }) => {
+    const selectedItem = data.find((item) => item.id.toString() === field.value);
+
+    return (
+      <FormItem className="flex flex-col">
+        <FormLabel>${f.label}
+        ${f.required ? ` <span className="text-red-500">*</span>` : ""}
+        </FormLabel>
+        <Popover modal>
+          <PopoverTrigger asChild>
+            <FormControl>
+              <Button
+                variant="outline"
+                role="combobox"
+                type="button"
+                className={cn(
+                  'h-9 w-full justify-between truncate',
+                  !field.value && 'text-muted-foreground'
+                )}
+              >
+                {field.value
+                  ? selectedItem?.name
+                  : "${f.label}"}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </FormControl>
+          </PopoverTrigger>
+          <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
+            <Command>
+              <CommandInput
+                placeholder="Search..."
+              />
+              <CommandList>
+                <CommandEmpty>No items found.</CommandEmpty>
+                <CommandGroup>
+                  {data.map((item) => (
+                    <CommandItem
+                      value={item.id.toString()}
+                      key={item.id}
+                      onSelect={() => {
+                        if (item.id.toString() === field.value) {
+                          field.onChange(undefined);
+                        } else {
+                          field.onChange(item.id.toString());
+                        }
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          item.id.toString() === field.value
+                            ? 'opacity-100'
+                            : 'opacity-0'
+                        )}
+                      />
+                      {item.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        <FormMessage />
+      </FormItem>
+    );
+  }}
+/>
+          `;
+          }
+
           return `
           <FormField
   control={form.control}
@@ -273,7 +352,7 @@ const fieldGenerator = (fields: FormField[]): string => {
             field.onChange(value ? value.id.toString() : undefined)
           }>
               <ComboboxInput
-                placeholder="Select the New Label"
+                placeholder="${f.label}"
                 ref={field.ref}
                 showClear
               />
