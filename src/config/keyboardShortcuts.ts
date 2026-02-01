@@ -39,6 +39,16 @@ interface KeyboardShortcutsParams {
   
   // Quick field creation
   quickAddField: (type: FieldType, formType?: HTMLInputTypeAttribute) => void;
+  
+  // Field actions
+  toggleRequired: (id: string) => void;
+  clearAllFields: () => void;
+  
+  // Command palette
+  setCommandPaletteOpen: (open: boolean) => void;
+  
+  // Search focus
+  focusFieldSearch: () => void;
 }
 
 export function createKeyboardShortcuts(
@@ -59,6 +69,10 @@ export function createKeyboardShortcuts(
     moveFieldDown,
     setShortcutsDialogOpen,
     quickAddField,
+    toggleRequired,
+    clearAllFields,
+    setCommandPaletteOpen,
+    focusFieldSearch,
   } = params;
 
   return [
@@ -197,6 +211,45 @@ export function createKeyboardShortcuts(
         }
       },
       condition: () => !!selectedFieldId,
+    },
+    // Toggle required: Ctrl/Cmd + Shift + R
+    {
+      key: "r",
+      ctrlOrCmd: true,
+      shiftKey: true,
+      action: () => {
+        if (selectedFieldId) {
+          toggleRequired(selectedFieldId);
+          toast.success("Required status toggled");
+        }
+      },
+      condition: () => !!selectedFieldId,
+    },
+    // Clear all fields: Ctrl/Cmd + Shift + Delete
+    {
+      key: "Delete",
+      ctrlOrCmd: true,
+      shiftKey: true,
+      action: () => {
+        clearAllFields();
+      },
+    },
+    // Command palette: Ctrl/Cmd + K
+    {
+      key: "k",
+      ctrlOrCmd: true,
+      action: () => {
+        setCommandPaletteOpen(true);
+      },
+    },
+    // Focus search: Ctrl/Cmd + F
+    {
+      key: "f",
+      ctrlOrCmd: true,
+      action: () => {
+        focusFieldSearch();
+      },
+      condition: () => fields.length > 0,
     },
     // Delete field: Delete or Backspace
     {

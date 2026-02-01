@@ -133,6 +133,27 @@ const keyboardShortcuts: Shortcut[] = [
       },
     ],
   },
+  {
+    category: "UI & Utility Actions",
+    shortcuts: [
+      {
+        description: "Toggle required flag on selected field",
+        keys: ["Ctrl", "Shift", "R"],
+      },
+      {
+        description: "Clear all fields",
+        keys: ["Ctrl", "Shift", "Delete"],
+      },
+      {
+        description: "Open command palette",
+        keys: ["Ctrl", "K"],
+      },
+      {
+        description: "Focus field list search",
+        keys: ["Ctrl", "F"],
+      },
+    ],
+  },
 ];
 
 export function KeyboardShortcutsDialog({

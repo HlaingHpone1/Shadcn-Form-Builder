@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
 import { createKeyboardShortcuts } from "@/config/keyboardShortcuts";
+import { CommandPalette } from "@/components/CommandPalette";
 
 export default function FormBuilder() {
   const fields = useFormStore((state) => state.fields);
@@ -36,20 +37,28 @@ export default function FormBuilder() {
   const setComponentInfo = useUIStore((state) => state.setComponentInfo);
   const hasShownInfo = useRef(false);
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = React.useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
 
   // Form store actions
   const duplicateField = useFormStore((state) => state.duplicateField);
-  const deleteSelectedField = useFormStore((state) => state.deleteSelectedField);
+  const deleteSelectedField = useFormStore(
+    (state) => state.deleteSelectedField,
+  );
   const setSelectedFieldId = useFormStore((state) => state.setSelectedFieldId);
   const selectNextField = useFormStore((state) => state.selectNextField);
-  const selectPreviousField = useFormStore((state) => state.selectPreviousField);
+  const selectPreviousField = useFormStore(
+    (state) => state.selectPreviousField,
+  );
   const moveFieldUp = useFormStore((state) => state.moveFieldUp);
   const moveFieldDown = useFormStore((state) => state.moveFieldDown);
   const quickAddField = useFormStore((state) => state.quickAddField);
+  const toggleRequired = useFormStore((state) => state.toggleRequired);
+  const clearAllFields = useFormStore((state) => state.clearAllFields);
 
   const showZodInfo = useCallback(() => {
     toast.info("Form Builder Requirement", {
-      description: "Zod version must be 4 or above for this form builder to work correctly.",
+      description:
+        "Zod version must be 4 or above for this form builder to work correctly.",
       duration: 5000,
     });
   }, []);
@@ -83,6 +92,17 @@ export default function FormBuilder() {
         moveFieldDown,
         setShortcutsDialogOpen,
         quickAddField,
+        toggleRequired,
+        clearAllFields,
+        setCommandPaletteOpen,
+        focusFieldSearch: () => {
+          const searchInput = document.querySelector(
+            "[data-field-search-input]",
+          ) as HTMLInputElement;
+          if (searchInput) {
+            searchInput.focus();
+          }
+        },
       }),
     [
       setActiveTab,
@@ -99,7 +119,10 @@ export default function FormBuilder() {
       moveFieldDown,
       setShortcutsDialogOpen,
       quickAddField,
-    ]
+      toggleRequired,
+      clearAllFields,
+      setCommandPaletteOpen,
+    ],
   );
 
   useKeyboardShortcuts({
@@ -121,7 +144,6 @@ export default function FormBuilder() {
       showZodInfo();
     }
   }, [hasHydrated, showZodInfo]);
-
 
   if (!hasHydrated) {
     return (
@@ -273,6 +295,11 @@ export default function FormBuilder() {
           </Card>
         </div>
       </div>
+      <CommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        onQuickAddField={quickAddField}
+      />
     </div>
   );
 }

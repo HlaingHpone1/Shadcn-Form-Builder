@@ -16,6 +16,8 @@ interface FormStore {
   moveFieldUp: (id: string) => void;
   moveFieldDown: (id: string) => void;
   quickAddField: (type: FieldType, formType?: HTMLInputTypeAttribute) => void;
+  toggleRequired: (id: string) => void;
+  clearAllFields: () => void;
   selectedFieldId: string | null;
   setSelectedFieldId: (id: string | null) => void;
   hasHydrated: boolean;
@@ -188,6 +190,28 @@ export const useFormStore = create<FormStore>()(
             fields: [...state.fields, newField],
             selectedFieldId: newId,
           };
+        }),
+      toggleRequired: (id) =>
+        set((state) => {
+          const field = state.fields.find((f) => f.id === id);
+          if (!field) return state;
+          return {
+            fields: state.fields.map((f) =>
+              f.id === id ? { ...f, required: !f.required } : f,
+            ),
+          };
+        }),
+      clearAllFields: () =>
+        set((state) => {
+          if (state.fields.length === 0) return state;
+          if (
+            confirm(
+              "Are you sure you want to clear all fields? This action cannot be undone.",
+            )
+          ) {
+            return { fields: [], selectedFieldId: null };
+          }
+          return state;
         }),
       selectedFieldId: null,
       setSelectedFieldId: (id) => set({ selectedFieldId: id }),

@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { componentList, FieldTypeEnum, PASSWORD_RULES } from "@/constants";
-import { Plus, Trash2, X } from "lucide-react";
-import React, { HTMLInputTypeAttribute } from "react";
+import { Plus, Trash2, X, Search } from "lucide-react";
+import React, { HTMLInputTypeAttribute, useState, useRef, useEffect } from "react";
 import { useFormStore } from "@/store/formStore";
 
 interface BuilderPanelProps {
@@ -27,6 +27,8 @@ const BuilderPanel = ({ selectedField }: BuilderPanelProps) => {
   const updateField = useFormStore((state) => state.updateField);
   const setFields = useFormStore((state) => state.setFields);
   const setSelectedFieldId = useFormStore((state) => state.setSelectedFieldId);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddField = (type: FieldType) => {
     const id = crypto.randomUUID();
@@ -138,7 +140,7 @@ const BuilderPanel = ({ selectedField }: BuilderPanelProps) => {
           className={`flex flex-col min-h-0 gap-3 ${selectedField ? "w-1/2" : "w-full"}`}
         >
           <CardHeader className="pb-2 shrink-0 gap-0">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-2">
               <CardTitle className="text-base">
                 Fields ({fields.length})
               </CardTitle>
@@ -154,6 +156,19 @@ const BuilderPanel = ({ selectedField }: BuilderPanelProps) => {
                 </Button>
               )}
             </div>
+            {fields.length > 0 && (
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  ref={searchInputRef}
+                  data-field-search-input
+                  placeholder="Search fields..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 h-8 text-sm"
+                />
+              </div>
+            )}
           </CardHeader>
           <CardContent className="flex-1 overflow-auto space-y-1.5 pt-0">
             {fields.length === 0 ? (
@@ -161,7 +176,17 @@ const BuilderPanel = ({ selectedField }: BuilderPanelProps) => {
                 No fields yet. Add a field to get started.
               </div>
             ) : (
-              fields.map((field) => (
+              fields
+                .filter((field) => {
+                  if (!searchQuery) return true;
+                  const query = searchQuery.toLowerCase();
+                  return (
+                    field.label?.toLowerCase().includes(query) ||
+                    field.name?.toLowerCase().includes(query) ||
+                    field.type?.toLowerCase().includes(query)
+                  );
+                })
+                .map((field) => (
                 <div
                   key={field.id}
                   onClick={() => setSelectedFieldId(field.id)}
