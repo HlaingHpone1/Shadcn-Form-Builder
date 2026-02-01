@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Code, Eye, Copy, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,30 +14,79 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useFormStore } from "@/store/formStore";
+import { useUIStore } from "@/store/uiStore";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 export default function FormBuilder() {
-  const [fields, setFields] = useState<FormField[]>([]);
-
-  const [componentInfo, setComponentInfo] = useState<ComponentInfo>({
-    functionName: "MyGeneratedForm",
-    schemaName: "formSchema",
-    schemaType: "MyFormType",
-  });
-
-  const [activeTab, setActiveTab] = useState<"preview" | "code">("preview");
-
-  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
-
+  const fields = useFormStore((state) => state.fields);
+  const selectedFieldId = useFormStore((state) => state.selectedFieldId);
+  const hasHydrated = useFormStore((state) => state.hasHydrated);
+  const setHasHydrated = useFormStore((state) => state.setHasHydrated);
   const selectedField = fields.find((f) => f.id === selectedFieldId) ?? null;
 
-  console.log(fields);
+  const activeTab = useUIStore((state) => state.activeTab);
+  const setActiveTab = useUIStore((state) => state.setActiveTab);
+  const componentInfo = useUIStore((state) => state.componentInfo);
+  const setComponentInfo = useUIStore((state) => state.setComponentInfo);
+
+  const handleCopyCode = useCallback(async () => {
+    try {
+      const code = generateCode(fields, componentInfo);
+      await navigator.clipboard.writeText(code);
+      toast.success("Code copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy code:", err);
+      toast.error("Failed to copy code to clipboard");
+    }
+  }, [fields, componentInfo]);
+
+  useEffect(() => {
+    if (!hasHydrated) {
+      setHasHydrated(true);
+    }
+  }, [hasHydrated, setHasHydrated]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCopy = (e.ctrlKey || e.metaKey) && e.key === "c";
+
+      if (
+        isCopy &&
+        activeTab === "code" &&
+        !window.getSelection()?.toString()
+      ) {
+        e.preventDefault();
+        handleCopyCode();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeTab, handleCopyCode]);
+
+  if (!hasHydrated) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Spinner className="size-8 text-primary" />
+          <p className="text-sm text-muted-foreground">
+            Loading form builder...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="sticky top-0 z-10 bg-white border-b shadow-sm px-6 py-3">
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="sticky top-0 z-10 bg-card border-b shadow-sm px-6 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Form Builder</h1>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -57,10 +106,10 @@ export default function FormBuilder() {
                         value={componentInfo.functionName}
                         placeholder="Function Name"
                         onChange={(e) =>
-                          setComponentInfo((prev) => ({
-                            ...prev,
+                          setComponentInfo({
+                            ...componentInfo,
                             functionName: e.target.value,
-                          }))
+                          })
                         }
                         className="h-8 text-sm"
                       />
@@ -73,10 +122,10 @@ export default function FormBuilder() {
                         value={componentInfo.schemaName}
                         placeholder="Schema Name"
                         onChange={(e) =>
-                          setComponentInfo((prev) => ({
-                            ...prev,
+                          setComponentInfo({
+                            ...componentInfo,
                             schemaName: e.target.value,
-                          }))
+                          })
                         }
                         className="h-8 text-sm"
                       />
@@ -89,10 +138,10 @@ export default function FormBuilder() {
                         value={componentInfo.schemaType}
                         placeholder="Schema Type"
                         onChange={(e) =>
-                          setComponentInfo((prev) => ({
-                            ...prev,
+                          setComponentInfo({
+                            ...componentInfo,
                             schemaType: e.target.value,
-                          }))
+                          })
                         }
                         className="h-8 text-sm"
                       />
@@ -127,34 +176,25 @@ export default function FormBuilder() {
       <div className="flex-1 flex gap-4 p-4 overflow-hidden">
         {/* --- LEFT PANEL: BUILDER --- */}
         <div className="flex-1 shrink-0">
-          <BuilderPanel
-            selectedField={selectedField}
-            fields={fields}
-            setFields={setFields}
-            setSelectedFieldId={setSelectedFieldId}
-          />
+          <BuilderPanel selectedField={selectedField} />
         </div>
 
         {/* --- RIGHT PANEL: PREVIEW / CODE --- */}
         <div className="flex-1 min-w-0">
           <Card className="h-full flex flex-col">
-            <CardContent className="flex-1 p-6 bg-white overflow-auto">
+            <CardContent className="flex-1 p-6 overflow-auto">
               {activeTab === "preview" ? (
                 <PreviewTab fields={fields} />
               ) : (
                 <div className="relative h-full">
-                  <pre className="bg-slate-950 text-slate-50 p-4 rounded-lg text-sm overflow-auto font-mono h-full">
+                  <pre className="bg-card text-card-foreground border p-4 rounded-lg text-sm overflow-auto font-mono h-full">
                     {generateCode(fields, componentInfo)}
                   </pre>
                   <Button
                     variant="secondary"
                     size="sm"
                     className="absolute top-4 right-4"
-                    onClick={async () => {
-                      await navigator.clipboard.writeText(
-                        generateCode(fields, componentInfo),
-                      );
-                    }}
+                    onClick={handleCopyCode}
                   >
                     <Copy className="w-4 h-4 mr-2" /> Copy
                   </Button>

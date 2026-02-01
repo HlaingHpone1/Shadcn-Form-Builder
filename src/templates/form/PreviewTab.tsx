@@ -153,7 +153,7 @@ const MultiComboboxPreview = ({ field }: { field: FormField }) => {
 const PreviewTab = ({ fields }: { fields: FormField[] }) => {
   return (
     <div className="max-w-2xl mx-auto space-y-4 py-4">
-      <div className="sticky top-0 bg-white z-10 pb-4 border-b mb-4">
+      <div className="sticky top-0 bg-background z-10 pb-4 border-b mb-4">
         <h2 className="text-lg font-semibold">Form Preview</h2>
         <p className="text-xs text-muted-foreground mt-1">
           {fields.length} {fields.length === 1 ? "field" : "fields"}

@@ -12,53 +12,74 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { componentList, FieldTypeEnum, PASSWORD_RULES } from "@/constants";
-import { Plus, Trash2 } from "lucide-react";
-import React, { Dispatch, HTMLInputTypeAttribute, SetStateAction } from "react";
+import { Plus, Trash2, X } from "lucide-react";
+import React, { HTMLInputTypeAttribute } from "react";
+import { useFormStore } from "@/store/formStore";
 
 interface BuilderPanelProps {
-  fields: FormField[];
-  setFields: Dispatch<SetStateAction<FormField[]>>;
   selectedField: FormField | null;
-  setSelectedFieldId: Dispatch<SetStateAction<string | null>>;
 }
 
-const BuilderPanel = ({
-  fields,
-  setFields,
-  selectedField,
-  setSelectedFieldId,
-}: BuilderPanelProps) => {
-  const addField = (type: FieldType) => {
+const BuilderPanel = ({ selectedField }: BuilderPanelProps) => {
+  const fields = useFormStore((state) => state.fields);
+  const addField = useFormStore((state) => state.addField);
+  const removeField = useFormStore((state) => state.removeField);
+  const updateField = useFormStore((state) => state.updateField);
+  const setFields = useFormStore((state) => state.setFields);
+  const setSelectedFieldId = useFormStore((state) => state.setSelectedFieldId);
+
+  const handleAddField = (type: FieldType) => {
     const id = crypto.randomUUID();
-    setFields([
-      ...fields,
-      {
-        id,
-        name: `field_${fields.length + 1}`,
-        label: "New Label",
-        type,
-        isMulti: false,
-        styleType: type === "COMBOBOX" ? "base-ui" : "radix-ui",
-        required: false,
-        formType: type === FieldTypeEnum.NUMBER ? "number" : "text",
-      },
-    ]);
+    
+    // Find the next available field number by checking existing field names
+    const getNextFieldNumber = () => {
+      const fieldNumbers = fields
+        .map((f) => {
+          const match = f.name.match(/^field_(\d+)$/);
+          return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter((num) => num > 0);
+      
+      if (fieldNumbers.length === 0) {
+        return 1;
+      }
+      
+      const maxNumber = Math.max(...fieldNumbers);
+      return maxNumber + 1;
+    };
+    
+    addField({
+      id,
+      name: `field_${getNextFieldNumber()}`,
+      label: "New Label",
+      type,
+      isMulti: false,
+      styleType: type === "COMBOBOX" ? "base-ui" : "radix-ui",
+      required: false,
+      formType: type === FieldTypeEnum.NUMBER ? "number" : "text",
+    });
     setSelectedFieldId(id);
   };
 
-  const removeField = (id: string) => {
-    setFields(fields.filter((f) => f.id !== id));
+  const handleRemoveField = (id: string) => {
+    removeField(id);
   };
 
-  const updateField = (id: string, updates: Partial<FormField>) => {
-    setFields((prev) =>
-      prev.map((field) => (field.id === id ? { ...field, ...updates } : field)),
-    );
+  const handleClearAllFields = () => {
+    if (fields.length === 0) return;
+    if (confirm("Are you sure you want to clear all fields? This action cannot be undone.")) {
+      setFields([]);
+      setSelectedFieldId(null);
+    }
+  };
+
+  const handleUpdateField = (id: string, updates: Partial<FormField>) => {
+    updateField(id, updates);
   };
 
   const handleValidationChange = (key: string, value: unknown) => {
     if (!selectedField) return;
-    updateField(selectedField.id, {
+    handleUpdateField(selectedField.id, {
       validation: {
         ...selectedField.validation,
         [key]: value,
@@ -79,7 +100,7 @@ const BuilderPanel = ({
       newPatterns = currentPatterns.filter((p) => p !== ruleKey);
     }
 
-    updateField(selectedField.id, {
+    handleUpdateField(selectedField.id, {
       validation: { ...selectedField.validation, patterns: newPatterns },
     });
   };
@@ -98,7 +119,7 @@ const BuilderPanel = ({
                 key={component.type}
                 size="sm"
                 variant="outline"
-                onClick={() => addField(component.type)}
+                onClick={() => handleAddField(component.type)}
                 className="h-8 text-xs justify-start"
                 title={component.label}
               >
@@ -117,9 +138,22 @@ const BuilderPanel = ({
           className={`flex flex-col min-h-0 gap-3 ${selectedField ? "w-1/2" : "w-full"}`}
         >
           <CardHeader className="pb-2 shrink-0 gap-0">
-            <CardTitle className="text-base">
-              Fields ({fields.length})
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">
+                Fields ({fields.length})
+              </CardTitle>
+              {fields.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  onClick={handleClearAllFields}
+                  title="Clear all fields"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="flex-1 overflow-auto space-y-1.5 pt-0">
             {fields.length === 0 ? (
@@ -134,7 +168,7 @@ const BuilderPanel = ({
                   className={`p-2.5 border rounded-md cursor-pointer transition-colors relative group ${
                     selectedField?.id === field.id
                       ? "bg-primary/5 border-primary shadow-sm"
-                      : "bg-white hover:bg-gray-50"
+                      : "bg-card hover:bg-accent"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -167,7 +201,7 @@ const BuilderPanel = ({
                       className="h-6 w-6 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeField(field.id);
+                        handleRemoveField(field.id);
                       }}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -194,7 +228,9 @@ const BuilderPanel = ({
                   <Input
                     value={selectedField.label}
                     onChange={(e) =>
-                      updateField(selectedField.id, { label: e.target.value })
+                      handleUpdateField(selectedField.id, {
+                        label: e.target.value,
+                      })
                     }
                     className="h-8 text-sm"
                   />
@@ -206,7 +242,9 @@ const BuilderPanel = ({
                   <Input
                     value={selectedField.name}
                     onChange={(e) =>
-                      updateField(selectedField.id, { name: e.target.value })
+                      handleUpdateField(selectedField.id, {
+                        name: e.target.value,
+                      })
                     }
                     className="h-8 font-mono text-xs"
                   />
@@ -218,7 +256,7 @@ const BuilderPanel = ({
                   id={`req-${selectedField.id}`}
                   checked={selectedField.required}
                   onCheckedChange={(c) =>
-                    updateField(selectedField.id, { required: c })
+                    handleUpdateField(selectedField.id, { required: c })
                   }
                 />
                 <Label htmlFor={`req-${selectedField.id}`} className="text-sm">
@@ -231,14 +269,14 @@ const BuilderPanel = ({
                   {selectedField.styleType === "base-ui" && (
                     <div className="flex items-center space-x-2">
                       <Switch
-                        id={`req-${selectedField.id}`}
+                        id={`multi-${selectedField.id}`}
                         checked={selectedField.isMulti}
                         onCheckedChange={(c) =>
-                          updateField(selectedField.id, { isMulti: c })
+                          handleUpdateField(selectedField.id, { isMulti: c })
                         }
                       />
                       <Label
-                        htmlFor={`req-${selectedField.id}`}
+                        htmlFor={`multi-${selectedField.id}`}
                         className="text-sm"
                       >
                         Multi
@@ -253,7 +291,9 @@ const BuilderPanel = ({
                     <Select
                       value={selectedField.styleType ?? "radix-ui"}
                       onValueChange={(value: "base-ui" | "radix-ui") =>
-                        updateField(selectedField.id, { styleType: value })
+                        handleUpdateField(selectedField.id, {
+                          styleType: value,
+                        })
                       }
                     >
                       <SelectTrigger className="h-8">
@@ -276,7 +316,7 @@ const BuilderPanel = ({
                   <Select
                     value={selectedField.formType}
                     onValueChange={(newType: string) =>
-                      updateField(selectedField.id, {
+                      handleUpdateField(selectedField.id, {
                         formType: newType as HTMLInputTypeAttribute,
                         validation: {
                           ...selectedField.validation,

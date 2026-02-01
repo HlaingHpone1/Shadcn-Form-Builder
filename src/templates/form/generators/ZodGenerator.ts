@@ -16,7 +16,7 @@ const zodGenerator = (fields: FormField[]): string => {
 
           case "email":
             return field.required
-              ? line + `.string().email(${label})`
+              ? line + `.string().email(${label}).nonempty(${label})`
               : line + `.string().email().optional()`;
 
           case "password":

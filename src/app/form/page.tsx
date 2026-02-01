@@ -5,7 +5,7 @@ import { DynamicFormRenderer } from "@/templates/form/DynamicFormRenderer";
 import { Spinner } from "@/components/ui/spinner";
 import { useEffect } from "react";
 
-export default function TestPage() {
+export default function FormPage() {
   const fields = useFormStore((state) => state.fields);
   const hasHydrated = useFormStore((state) => state.hasHydrated);
   const setHasHydrated = useFormStore((state) => state.setHasHydrated);
