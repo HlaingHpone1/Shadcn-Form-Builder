@@ -30,6 +30,8 @@ export default function FormBuilder() {
 
   const selectedField = fields.find((f) => f.id === selectedFieldId) ?? null;
 
+  console.log(fields);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="sticky top-0 z-10 bg-white border-b shadow-sm px-6 py-3">

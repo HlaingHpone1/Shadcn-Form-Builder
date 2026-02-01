@@ -1,6 +1,7 @@
 import { DatePickerInput } from "@/components/date-picker";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio";
 import {
   Combobox,
   ComboboxChip,
@@ -208,6 +209,25 @@ const PreviewTab = ({ fields }: { fields: FormField[] }) => {
                     </div>
                   ))}
                 </div>
+              )}
+
+              {f.type === FieldTypeEnum.RADIO && (
+                <RadioGroup defaultValue="">
+                  {data.map((item) => (
+                    <div key={item.id} className="flex items-center gap-2">
+                      <RadioGroupItem
+                        value={item.id.toString()}
+                        id={`radio-${f.id}-${item.id}`}
+                      />
+                      <Label
+                        htmlFor={`radio-${f.id}-${item.id}`}
+                        className="cursor-pointer text-sm"
+                      >
+                        {item.name}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
               )}
 
               {f.type === FieldTypeEnum.SELECT && (

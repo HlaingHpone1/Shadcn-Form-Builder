@@ -21,7 +21,7 @@ const fieldGenerator = (fields: FormField[]): string => {
                           <div key={item.id} className="flex items-center gap-2">
                           <FormControl>
                             <Checkbox
-                              id="checkbox-{item.id}"
+                                id={\`checkbox-\${item.id}\`}
                               checked={field.value${
                                 f.required ? "" : "?"
                               }.includes(item.id)}
@@ -40,13 +40,53 @@ const fieldGenerator = (fields: FormField[]): string => {
                               } />
                           </FormControl>
                           <label
-                            htmlFor="checkbox-{item.id}"
+                            htmlFor={\`checkbox-\${item.id}\`}
                             className="cursor-pointer"
                           >
                             {item.name}
                           </label>
                         </div>
                         )}
+                      <FormMessage />
+                    </FormItem>
+                )}
+              />
+            `;
+
+        case FieldTypeEnum.RADIO:
+          return `
+              <FormField
+                  control={form.control}
+                  name="${f.name}"
+                  render={({field}) => (
+                    <FormItem>
+                    <FormLabel>${f.label} ${
+                      f.required
+                        ? ` <span className="text-red-500">*</span>`
+                        : ""
+                    } </FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          {data.map((item) => (
+                            <div key={item.id} className="flex items-center gap-2">
+                              <RadioGroupItem
+                                value={item.id.toString()}
+                                id={\`radio-\${item.id}\`}
+
+                              />
+                              <label
+                                htmlFor={\`radio-\${item.id}\`}
+                                className="cursor-pointer text-sm"
+                              >
+                                {item.name}
+                              </label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                 )}

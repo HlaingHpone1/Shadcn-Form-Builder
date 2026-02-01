@@ -7,6 +7,10 @@ const defaultValuesGenerator = (fields: FormField[]) => {
         return `    ${f.name}: []`;
       }
 
+      if (f.type === FieldTypeEnum.RADIO) {
+        return `    ${f.name}: ""`;
+      }
+
       if (f.type === FieldTypeEnum.SELECT) {
         return `    ${f.name}: undefined`;
       }

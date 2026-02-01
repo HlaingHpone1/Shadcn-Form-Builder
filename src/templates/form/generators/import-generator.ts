@@ -10,6 +10,8 @@ const importGenerator = (fields: FormField[]) => {
       switch (f.type) {
         case FieldTypeEnum.CHECKBOX:
           return `import { Checkbox } from "@/components/ui/checkbox";`;
+        case FieldTypeEnum.RADIO:
+          return `import { RadioGroup, RadioGroupItem } from "@/components/ui/radio";`;
         case FieldTypeEnum.TEXT:
           switch (f.formType) {
             case "password":

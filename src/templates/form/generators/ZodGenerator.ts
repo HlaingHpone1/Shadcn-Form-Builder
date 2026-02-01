@@ -61,6 +61,11 @@ const zodGenerator = (fields: FormField[]): string => {
 
       case FieldTypeEnum.CHECKBOX:
         return field.required
+          ? `  ${field.name}: z.z.array(z.number()).nonempty("${field.label} is required")`
+          : `  ${field.name}: z.z.array(z.number()).optional()`;
+
+      case FieldTypeEnum.RADIO:
+        return field.required
           ? `  ${field.name}: z.string().nonempty("${field.label} is required")`
           : `  ${field.name}: z.string().optional()`;
 
