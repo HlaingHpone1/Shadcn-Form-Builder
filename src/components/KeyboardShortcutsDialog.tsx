@@ -154,6 +154,20 @@ const keyboardShortcuts: Shortcut[] = [
       },
     ],
   },
+  {
+    category: "Advanced Features",
+    shortcuts: [
+      {
+        description: "Undo last action",
+        keys: ["Ctrl", "Z"],
+      },
+      {
+        description: "Redo",
+        keys: ["Ctrl", "Shift", "Z"],
+        alternativeKeys: ["Ctrl", "Y"],
+      },
+    ],
+  },
 ];
 
 export function KeyboardShortcutsDialog({

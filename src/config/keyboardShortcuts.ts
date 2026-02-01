@@ -49,6 +49,12 @@ interface KeyboardShortcutsParams {
   
   // Search focus
   focusFieldSearch: () => void;
+  
+  // Undo/Redo
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export function createKeyboardShortcuts(
@@ -73,6 +79,10 @@ export function createKeyboardShortcuts(
     clearAllFields,
     setCommandPaletteOpen,
     focusFieldSearch,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   } = params;
 
   return [
@@ -250,6 +260,43 @@ export function createKeyboardShortcuts(
         focusFieldSearch();
       },
       condition: () => fields.length > 0,
+    },
+    // Undo: Ctrl/Cmd + Z
+    {
+      key: "z",
+      ctrlOrCmd: true,
+      shiftKey: false,
+      action: () => {
+        if (canUndo) {
+          undo();
+          toast.success("Undone");
+        }
+      },
+      condition: () => canUndo,
+    },
+    // Redo: Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y
+    {
+      key: "z",
+      ctrlOrCmd: true,
+      shiftKey: true,
+      action: () => {
+        if (canRedo) {
+          redo();
+          toast.success("Redone");
+        }
+      },
+      condition: () => canRedo,
+    },
+    {
+      key: "y",
+      ctrlOrCmd: true,
+      action: () => {
+        if (canRedo) {
+          redo();
+          toast.success("Redone");
+        }
+      },
+      condition: () => canRedo && activeTab !== "code", // Avoid conflict with browser redo
     },
     // Delete field: Delete or Backspace
     {

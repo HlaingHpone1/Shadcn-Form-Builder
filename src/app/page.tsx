@@ -54,6 +54,10 @@ export default function FormBuilder() {
   const quickAddField = useFormStore((state) => state.quickAddField);
   const toggleRequired = useFormStore((state) => state.toggleRequired);
   const clearAllFields = useFormStore((state) => state.clearAllFields);
+  const undo = useFormStore((state) => state.undo);
+  const redo = useFormStore((state) => state.redo);
+  const canUndo = useFormStore((state) => state.canUndo);
+  const canRedo = useFormStore((state) => state.canRedo);
 
   const showZodInfo = useCallback(() => {
     toast.info("Form Builder Requirement", {
@@ -103,6 +107,10 @@ export default function FormBuilder() {
             searchInput.focus();
           }
         },
+        undo,
+        redo,
+        canUndo,
+        canRedo,
       }),
     [
       setActiveTab,
@@ -122,6 +130,10 @@ export default function FormBuilder() {
       toggleRequired,
       clearAllFields,
       setCommandPaletteOpen,
+      undo,
+      redo,
+      canUndo,
+      canRedo,
     ],
   );
 

@@ -3,6 +3,11 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { FieldTypeEnum } from "@/constants";
 import type { HTMLInputTypeAttribute } from "react";
 
+interface FormState {
+  fields: FormField[];
+  selectedFieldId: string | null;
+}
+
 interface FormStore {
   fields: FormField[];
   setFields: (fields: FormField[]) => void;
@@ -20,35 +25,116 @@ interface FormStore {
   clearAllFields: () => void;
   selectedFieldId: string | null;
   setSelectedFieldId: (id: string | null) => void;
+  // Undo/Redo
+  history: FormState[];
+  historyIndex: number;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  // Select all
+  selectAllFields: () => void;
+  selectedFieldIds: string[];
+  setSelectedFieldIds: (ids: string[]) => void;
   hasHydrated: boolean;
   setHasHydrated: (hasHydrated: boolean) => void;
 }
 
+const MAX_HISTORY_SIZE = 50;
+
+const saveToHistory = (state: FormStore): FormState => ({
+  fields: JSON.parse(JSON.stringify(state.fields)), // Deep clone
+  selectedFieldId: state.selectedFieldId,
+});
+
 export const useFormStore = create<FormStore>()(
   persist(
-    (set) => ({
-      fields: [],
-      setFields: (fields) => set({ fields }),
-      addField: (field) =>
-        set((state) => ({ fields: [...state.fields, field] })),
-      updateField: (id, updates) =>
-        set((state) => ({
-          fields: state.fields.map((field) =>
-            field.id === id ? { ...field, ...updates } : field,
-          ),
-        })),
-      removeField: (id) =>
-        set((state) => ({
-          fields: state.fields.filter((field) => field.id !== id),
-        })),
-      duplicateField: (id) =>
-        set((state) => {
+    (set, get) => {
+      const initialState: FormState = {
+        fields: [],
+        selectedFieldId: null,
+      };
+
+      const addToHistory = (newState: Partial<FormStore>) => {
+        const state = get();
+        const historyState = saveToHistory({ ...state, ...newState } as FormStore);
+        const newHistory = [
+          ...state.history.slice(0, state.historyIndex + 1),
+          historyState,
+        ].slice(-MAX_HISTORY_SIZE);
+        return {
+          ...newState,
+          history: newHistory,
+          historyIndex: newHistory.length - 1,
+          canUndo: true,
+          canRedo: false,
+        };
+      };
+
+      return {
+        fields: [],
+        history: [initialState],
+        historyIndex: 0,
+        canUndo: false,
+        canRedo: false,
+        selectedFieldIds: [],
+        setSelectedFieldIds: (ids) => set({ selectedFieldIds: ids }),
+        selectAllFields: () =>
+          set((state) => ({
+            selectedFieldIds: state.fields.map((f) => f.id),
+          })),
+        undo: () =>
+          set((state) => {
+            if (state.historyIndex <= 0) return state;
+            const newIndex = state.historyIndex - 1;
+            const previousState = state.history[newIndex];
+            return {
+              fields: previousState.fields,
+              selectedFieldId: previousState.selectedFieldId,
+              historyIndex: newIndex,
+              canUndo: newIndex > 0,
+              canRedo: true,
+            };
+          }),
+        redo: () =>
+          set((state) => {
+            if (state.historyIndex >= state.history.length - 1) return state;
+            const newIndex = state.historyIndex + 1;
+            const nextState = state.history[newIndex];
+            return {
+              fields: nextState.fields,
+              selectedFieldId: nextState.selectedFieldId,
+              historyIndex: newIndex,
+              canUndo: true,
+              canRedo: newIndex < state.history.length - 1,
+            };
+          }),
+        setFields: (fields) => set(addToHistory({ fields })),
+        addField: (field) => {
+          const state = get();
+          set(addToHistory({ fields: [...state.fields, field] }));
+        },
+        updateField: (id, updates) => {
+          const state = get();
+          const newFields = state.fields.map((f) =>
+            f.id === id ? { ...f, ...updates } : f,
+          );
+          set(addToHistory({ fields: newFields }));
+        },
+        removeField: (id) => {
+          const state = get();
+          const newFields = state.fields.filter((f) => f.id !== id);
+          const newSelectedFieldId =
+            state.selectedFieldId === id ? null : state.selectedFieldId;
+          set(addToHistory({ fields: newFields, selectedFieldId: newSelectedFieldId }));
+        },
+        duplicateField: (id) => {
+          const state = get();
           const fieldToDuplicate = state.fields.find((f) => f.id === id);
-          if (!fieldToDuplicate) return state;
+          if (!fieldToDuplicate) return;
 
           const newId = crypto.randomUUID();
 
-          // Find the next available field number by checking existing field names
           const getNextFieldNumber = () => {
             const fieldNumbers = state.fields
               .map((f) => {
@@ -72,54 +158,48 @@ export const useFormStore = create<FormStore>()(
             label: `${fieldToDuplicate.label} (Copy)`,
           };
 
-          return {
-            fields: [...state.fields, duplicatedField],
-            selectedFieldId: newId,
-          };
-        }),
-      deleteSelectedField: () =>
-        set((state) => {
-          if (!state.selectedFieldId) return state;
-          return {
-            fields: state.fields.filter(
-              (field) => field.id !== state.selectedFieldId,
-            ),
-            selectedFieldId: null,
-          };
-        }),
-      selectNextField: () =>
-        set((state) => {
-          if (state.fields.length === 0) return state;
-          if (!state.selectedFieldId) {
-            // If nothing selected, select first field
-            return { selectedFieldId: state.fields[0].id };
-          }
-          const currentIndex = state.fields.findIndex(
-            (f) => f.id === state.selectedFieldId,
+          const newFields = [...state.fields, duplicatedField];
+          set(addToHistory({ fields: newFields, selectedFieldId: newId }));
+        },
+        deleteSelectedField: () => {
+          const state = get();
+          if (!state.selectedFieldId) return;
+          const newFields = state.fields.filter(
+            (f) => f.id !== state.selectedFieldId,
           );
-          if (currentIndex === -1) return state;
-          const nextIndex = (currentIndex + 1) % state.fields.length;
-          return { selectedFieldId: state.fields[nextIndex].id };
-        }),
-      selectPreviousField: () =>
-        set((state) => {
-          if (state.fields.length === 0) return state;
-          if (!state.selectedFieldId) {
-            // If nothing selected, select last field
-            return { selectedFieldId: state.fields[state.fields.length - 1].id };
-          }
-          const currentIndex = state.fields.findIndex(
-            (f) => f.id === state.selectedFieldId,
-          );
-          if (currentIndex === -1) return state;
-          const prevIndex =
-            currentIndex === 0 ? state.fields.length - 1 : currentIndex - 1;
-          return { selectedFieldId: state.fields[prevIndex].id };
-        }),
-      moveFieldUp: (id) =>
-        set((state) => {
+          set(addToHistory({ fields: newFields, selectedFieldId: null }));
+        },
+        selectNextField: () =>
+          set((state) => {
+            if (state.fields.length === 0) return state;
+            if (!state.selectedFieldId) {
+              return { selectedFieldId: state.fields[0].id };
+            }
+            const currentIndex = state.fields.findIndex(
+              (f) => f.id === state.selectedFieldId,
+            );
+            if (currentIndex === -1) return state;
+            const nextIndex = (currentIndex + 1) % state.fields.length;
+            return { selectedFieldId: state.fields[nextIndex].id };
+          }),
+        selectPreviousField: () =>
+          set((state) => {
+            if (state.fields.length === 0) return state;
+            if (!state.selectedFieldId) {
+              return { selectedFieldId: state.fields[state.fields.length - 1].id };
+            }
+            const currentIndex = state.fields.findIndex(
+              (f) => f.id === state.selectedFieldId,
+            );
+            if (currentIndex === -1) return state;
+            const prevIndex =
+              currentIndex === 0 ? state.fields.length - 1 : currentIndex - 1;
+            return { selectedFieldId: state.fields[prevIndex].id };
+          }),
+        moveFieldUp: (id) => {
+          const state = get();
           const currentIndex = state.fields.findIndex((f) => f.id === id);
-          if (currentIndex === -1 || currentIndex === 0) return state;
+          if (currentIndex === -1 || currentIndex === 0) return;
 
           const newFields = [...state.fields];
           [newFields[currentIndex - 1], newFields[currentIndex]] = [
@@ -127,16 +207,16 @@ export const useFormStore = create<FormStore>()(
             newFields[currentIndex - 1],
           ];
 
-          return { fields: newFields };
-        }),
-      moveFieldDown: (id) =>
-        set((state) => {
+          set(addToHistory({ fields: newFields }));
+        },
+        moveFieldDown: (id) => {
+          const state = get();
           const currentIndex = state.fields.findIndex((f) => f.id === id);
           if (
             currentIndex === -1 ||
             currentIndex === state.fields.length - 1
           )
-            return state;
+            return;
 
           const newFields = [...state.fields];
           [newFields[currentIndex], newFields[currentIndex + 1]] = [
@@ -144,13 +224,12 @@ export const useFormStore = create<FormStore>()(
             newFields[currentIndex],
           ];
 
-          return { fields: newFields };
-        }),
-      quickAddField: (type, formTypeOverride) =>
-        set((state) => {
+          set(addToHistory({ fields: newFields }));
+        },
+        quickAddField: (type, formTypeOverride) => {
+          const state = get();
           const newId = crypto.randomUUID();
 
-          // Find the next available field number by checking existing field names
           const getNextFieldNumber = () => {
             const fieldNumbers = state.fields
               .map((f) => {
@@ -167,7 +246,6 @@ export const useFormStore = create<FormStore>()(
             return maxNumber + 1;
           };
 
-          // Determine formType based on field type or override
           let formType: HTMLInputTypeAttribute = "text";
           if (formTypeOverride) {
             formType = formTypeOverride;
@@ -186,46 +264,56 @@ export const useFormStore = create<FormStore>()(
             formType,
           };
 
-          return {
-            fields: [...state.fields, newField],
-            selectedFieldId: newId,
-          };
-        }),
-      toggleRequired: (id) =>
-        set((state) => {
+          const newFields = [...state.fields, newField];
+          set(addToHistory({ fields: newFields, selectedFieldId: newId }));
+        },
+        toggleRequired: (id) => {
+          const state = get();
           const field = state.fields.find((f) => f.id === id);
-          if (!field) return state;
-          return {
-            fields: state.fields.map((f) =>
-              f.id === id ? { ...f, required: !f.required } : f,
-            ),
-          };
-        }),
-      clearAllFields: () =>
-        set((state) => {
-          if (state.fields.length === 0) return state;
+          if (!field) return;
+          const newFields = state.fields.map((f) =>
+            f.id === id ? { ...f, required: !f.required } : f,
+          );
+          set(addToHistory({ fields: newFields }));
+        },
+        clearAllFields: () => {
+          const state = get();
+          if (state.fields.length === 0) return;
           if (
             confirm(
               "Are you sure you want to clear all fields? This action cannot be undone.",
             )
           ) {
-            return { fields: [], selectedFieldId: null };
+            set(addToHistory({ fields: [], selectedFieldId: null }));
           }
-          return state;
-        }),
-      selectedFieldId: null,
-      setSelectedFieldId: (id) => set({ selectedFieldId: id }),
-      hasHydrated: false,
-      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
-    }),
+        },
+        selectedFieldId: null,
+        setSelectedFieldId: (id) => set({ selectedFieldId: id }),
+        hasHydrated: false,
+        setHasHydrated: (hasHydrated) => set({ hasHydrated }),
+      };
+    },
     {
       name: "form-builder-storage",
       storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         fields: state.fields,
         selectedFieldId: state.selectedFieldId,
+        // Don't persist history - it's session-only
       }),
       onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Initialize history with current state after rehydration
+          const initialState: FormState = {
+            fields: state.fields,
+            selectedFieldId: state.selectedFieldId,
+          };
+          state.history = [initialState];
+          state.historyIndex = 0;
+          state.canUndo = false;
+          state.canRedo = false;
+          state.selectedFieldIds = [];
+        }
         state?.setHasHydrated(true);
       },
     },
