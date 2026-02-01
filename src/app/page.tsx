@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useCallback, useEffect } from "react";
-import { Code, Eye, Copy, Settings } from "lucide-react";
+import React, { useCallback, useEffect, useRef } from "react";
+import { Code, Eye, Copy, Settings, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import BuilderPanel from "@/templates/form/BuilderPanel";
@@ -19,6 +19,9 @@ import { useUIStore } from "@/store/uiStore";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
+import { createKeyboardShortcuts } from "@/config/keyboardShortcuts";
 
 export default function FormBuilder() {
   const fields = useFormStore((state) => state.fields);
@@ -31,6 +34,25 @@ export default function FormBuilder() {
   const setActiveTab = useUIStore((state) => state.setActiveTab);
   const componentInfo = useUIStore((state) => state.componentInfo);
   const setComponentInfo = useUIStore((state) => state.setComponentInfo);
+  const hasShownInfo = useRef(false);
+  const [shortcutsDialogOpen, setShortcutsDialogOpen] = React.useState(false);
+
+  // Form store actions
+  const duplicateField = useFormStore((state) => state.duplicateField);
+  const deleteSelectedField = useFormStore((state) => state.deleteSelectedField);
+  const setSelectedFieldId = useFormStore((state) => state.setSelectedFieldId);
+  const selectNextField = useFormStore((state) => state.selectNextField);
+  const selectPreviousField = useFormStore((state) => state.selectPreviousField);
+  const moveFieldUp = useFormStore((state) => state.moveFieldUp);
+  const moveFieldDown = useFormStore((state) => state.moveFieldDown);
+  const quickAddField = useFormStore((state) => state.quickAddField);
+
+  const showZodInfo = useCallback(() => {
+    toast.info("Form Builder Requirement", {
+      description: "Zod version must be 4 or above for this form builder to work correctly.",
+      duration: 5000,
+    });
+  }, []);
 
   const handleCopyCode = useCallback(async () => {
     try {
@@ -43,29 +65,63 @@ export default function FormBuilder() {
     }
   }, [fields, componentInfo]);
 
+  // Keyboard shortcuts configuration using map-based dispatch
+  const shortcuts = React.useMemo(
+    () =>
+      createKeyboardShortcuts({
+        setActiveTab,
+        activeTab,
+        handleCopyCode,
+        selectedFieldId,
+        fields,
+        duplicateField,
+        deleteSelectedField,
+        setSelectedFieldId,
+        selectNextField,
+        selectPreviousField,
+        moveFieldUp,
+        moveFieldDown,
+        setShortcutsDialogOpen,
+        quickAddField,
+      }),
+    [
+      setActiveTab,
+      activeTab,
+      handleCopyCode,
+      selectedFieldId,
+      fields,
+      duplicateField,
+      deleteSelectedField,
+      setSelectedFieldId,
+      selectNextField,
+      selectPreviousField,
+      moveFieldUp,
+      moveFieldDown,
+      setShortcutsDialogOpen,
+      quickAddField,
+    ]
+  );
+
+  useKeyboardShortcuts({
+    shortcuts,
+    enabled: hasHydrated,
+    scope: "global",
+  });
+
   useEffect(() => {
     if (!hasHydrated) {
       setHasHydrated(true);
     }
   }, [hasHydrated, setHasHydrated]);
 
+  // Show zod requirement info on first load
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const isCopy = (e.ctrlKey || e.metaKey) && e.key === "c";
+    if (hasHydrated && !hasShownInfo.current) {
+      hasShownInfo.current = true;
+      showZodInfo();
+    }
+  }, [hasHydrated, showZodInfo]);
 
-      if (
-        isCopy &&
-        activeTab === "code" &&
-        !window.getSelection()?.toString()
-      ) {
-        e.preventDefault();
-        handleCopyCode();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeTab, handleCopyCode]);
 
   if (!hasHydrated) {
     return (
@@ -86,6 +142,19 @@ export default function FormBuilder() {
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Form Builder</h1>
           <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={showZodInfo}
+              className="h-8 w-8 p-0"
+              title="Form Builder Info"
+            >
+              <Info className="w-4 h-4" />
+            </Button>
+            <KeyboardShortcutsDialog
+              open={shortcutsDialogOpen}
+              onOpenChange={setShortcutsDialogOpen}
+            />
             <ThemeToggle />
             <Popover>
               <PopoverTrigger asChild>
