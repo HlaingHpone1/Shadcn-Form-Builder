@@ -10,6 +10,8 @@ interface KeyboardShortcutConfig {
   altKey?: boolean;
   ctrlOrCmd?: boolean;
   altOrOption?: boolean;
+  // If true, requires ctrlKey on Mac (Control key) or altKey on Windows/Linux (Alt key)
+  controlOrAlt?: boolean;
   action: (e: KeyboardEvent) => void;
   preventDefault?: boolean;
   condition?: (e: KeyboardEvent) => boolean;
@@ -97,8 +99,8 @@ export function createKeyboardShortcuts(
       ctrlOrCmd: true,
       action: () => setActiveTab("code"),
     },
-    // Quick field creation shortcuts (Ctrl/Cmd + Alt/Option)
-    // Ctrl/Cmd + Alt/Option + I → Add Text field
+    // Quick field creation shortcuts (Ctrl/Cmd + Control on Mac, Ctrl/Cmd + Alt on Windows/Linux)
+    // Ctrl/Cmd + Control (Mac) / Alt (Windows/Linux) + I → Add Text field
     {
       key: "i",
       ctrlOrCmd: true,
@@ -108,11 +110,11 @@ export function createKeyboardShortcuts(
         toast.success("Text field added");
       },
     },
-    // Ctrl/Cmd + Alt/Option + A → Add Textarea field
+    // Ctrl/Cmd + Control (Mac) / Alt (Windows/Linux) + A → Add Textarea field
     {
       key: "a",
       ctrlOrCmd: true,
-      altOrOption: true,
+      controlOrAlt: true,
       action: () => {
         quickAddField(FieldTypeEnum.TEXTAREA);
         toast.success("Textarea field added");
@@ -180,31 +182,31 @@ export function createKeyboardShortcuts(
         );
       },
     },
-    // Ctrl/Cmd + Alt + R → Add Radio field
+    // Ctrl/Cmd + Control (Mac) / Alt (Windows/Linux) + R → Add Radio field
     {
       key: "r",
       ctrlOrCmd: true,
-      altOrOption: true,
+      controlOrAlt: true,
       action: () => {
         quickAddField(FieldTypeEnum.RADIO);
         toast.success("Radio field added");
       },
     },
-    // Ctrl/Cmd + Alt/Option + O → Add Combobox field
+    // Ctrl/Cmd + Control (Mac) / Alt (Windows/Linux) + O → Add Combobox field
     {
       key: "o",
       ctrlOrCmd: true,
-      altOrOption: true,
+      controlOrAlt: true,
       action: () => {
         quickAddField(FieldTypeEnum.COMBOBOX);
         toast.success("Combobox field added");
       },
     },
-    // Ctrl/Cmd + Alt/Option + Y → Add Datepicker field
+    // Ctrl/Cmd + Control (Mac) / Alt (Windows/Linux) + Y → Add Datepicker field
     {
       key: "y",
       ctrlOrCmd: true,
-      altOrOption: true,
+      controlOrAlt: true,
       action: () => {
         quickAddField(FieldTypeEnum.DATEPICKER);
         toast.success("Datepicker field added");

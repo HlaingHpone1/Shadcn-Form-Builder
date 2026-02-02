@@ -10,6 +10,8 @@ interface KeyboardShortcutConfig {
   ctrlOrCmd?: boolean;
   // If true, requires altKey (Windows/Linux) or optionKey (Mac) - they're the same key
   altOrOption?: boolean;
+  // If true, requires ctrlKey on Mac (Control key ⌃) or altKey on Windows/Linux (Alt key)
+  controlOrAlt?: boolean;
   action: (e: KeyboardEvent) => void;
   preventDefault?: boolean;
   condition?: (e: KeyboardEvent) => boolean;
@@ -76,15 +78,17 @@ export function useKeyboardShortcuts({
       const keyEvent = e as KeyboardEvent;
       // Check if typing in input (skip shortcuts)
       if (isTypingInInput()) {
-        // Allow Escape, ?, /, Ctrl/Cmd + Arrow keys, and Ctrl/Cmd + Alt shortcuts to work even in inputs
-        // (Ctrl/Cmd + Arrow is for reordering, Ctrl/Cmd + Alt is for quick field creation)
+        // Allow Escape, ?, /, Ctrl/Cmd + Arrow keys, and Ctrl/Cmd + Control/Alt shortcuts to work even in inputs
+        // (Ctrl/Cmd + Arrow is for reordering, Ctrl/Cmd + Control/Alt is for quick field creation)
         const allowedKeys = ["Escape", "?", "/"];
         const isCtrlOrCmdArrow =
           (keyEvent.ctrlKey || keyEvent.metaKey) &&
           (keyEvent.key === "ArrowUp" || keyEvent.key === "ArrowDown");
-        const isCtrlOrCmdAlt =
-          (keyEvent.ctrlKey || keyEvent.metaKey) && keyEvent.altKey;
-        if (!allowedKeys.includes(keyEvent.key) && !isCtrlOrCmdArrow && !isCtrlOrCmdAlt) {
+        // Check for Ctrl/Cmd + Control (Mac) or Ctrl/Cmd + Alt (Windows/Linux)
+        const isCtrlOrCmdControlOrAlt =
+          (keyEvent.metaKey && keyEvent.ctrlKey) || // Mac: Cmd + Control
+          (keyEvent.ctrlKey && keyEvent.altKey); // Windows/Linux: Ctrl + Alt
+        if (!allowedKeys.includes(keyEvent.key) && !isCtrlOrCmdArrow && !isCtrlOrCmdControlOrAlt) {
           return;
         }
       }
@@ -151,6 +155,23 @@ export function useKeyboardShortcuts({
               : shortcut.altKey === keyEvent.altKey;
         }
 
+        // Handle Control (Mac) / Alt (Windows/Linux)
+        let controlOrAltMatch = true;
+        if (shortcut.controlOrAlt !== undefined) {
+          // On Mac: require ctrlKey (Control key ⌃) when metaKey (Cmd) is also pressed
+          // On Windows/Linux: require altKey (Alt key) when ctrlKey (Ctrl) is also pressed
+          // Detect Mac: if metaKey is pressed, it's Mac; otherwise if only ctrlKey is pressed, it's Windows/Linux
+          if (keyEvent.metaKey) {
+            // Mac: Cmd + Control
+            controlOrAltMatch = keyEvent.ctrlKey; // Control key on Mac
+          } else if (keyEvent.ctrlKey) {
+            // Windows/Linux: Ctrl + Alt
+            controlOrAltMatch = keyEvent.altKey; // Alt key on Windows/Linux
+          } else {
+            controlOrAltMatch = false;
+          }
+        }
+
         // Additional condition check
         const conditionMatch = shortcut.condition
           ? shortcut.condition(keyEvent)
@@ -161,6 +182,7 @@ export function useKeyboardShortcuts({
           ctrlOrCmdMatch &&
           shiftMatch &&
           altOrOptionMatch &&
+          controlOrAltMatch &&
           conditionMatch
         );
       });

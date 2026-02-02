@@ -93,43 +93,43 @@ const keyboardShortcuts: Shortcut[] = [
     shortcuts: [
       {
         description: "Add Text field",
-        keys: ["Ctrl", "Alt", "I"],
+        keys: ["Ctrl", "Control", "I"], // Control on Mac, Alt on Windows/Linux
       },
       {
         description: "Add Textarea field",
-        keys: ["Ctrl", "Alt", "A"],
+        keys: ["Ctrl", "Control", "A"], // Control on Mac, Alt on Windows/Linux
       },
       {
         description: "Add Email field",
-        keys: ["Ctrl", "Alt", "E"],
+        keys: ["Ctrl", "Control", "E"], // Control on Mac, Alt on Windows/Linux
       },
       {
         description: "Add Password field",
-        keys: ["Ctrl", "Alt", "P"],
+        keys: ["Ctrl", "Control", "P"], // Control on Mac, Alt on Windows/Linux
       },
       {
         description: "Add Number field",
-        keys: ["Ctrl", "Alt", "N"],
+        keys: ["Ctrl", "Control", "N"], // Control on Mac, Alt on Windows/Linux
       },
       {
         description: "Add Select field",
-        keys: ["Ctrl", "Alt", "S"],
+        keys: ["Ctrl", "Control", "S"], // Control on Mac, Alt on Windows/Linux
       },
       {
         description: "Add Checkbox field",
-        keys: ["Ctrl", "Alt", "C"],
+        keys: ["Ctrl", "Control", "C"], // Control on Mac, Alt on Windows/Linux
       },
       {
         description: "Add Radio field",
-        keys: ["Ctrl", "Alt", "R"],
+        keys: ["Ctrl", "Control", "R"], // Control on Mac, Alt on Windows/Linux
       },
       {
         description: "Add Combobox field",
-        keys: ["Ctrl", "Alt", "O"],
+        keys: ["Ctrl", "Control", "O"], // Control on Mac, Alt on Windows/Linux
       },
       {
         description: "Add Datepicker field",
-        keys: ["Ctrl", "Alt", "Y"],
+        keys: ["Ctrl", "Control", "Y"], // Control on Mac, Alt on Windows/Linux
       },
     ],
   },
@@ -222,6 +222,9 @@ export function KeyboardShortcutsDialog({
                             displayKey = isMac ? "⌘" : "Ctrl";
                           } else if (key === "Alt") {
                             displayKey = isMac ? "⌥" : "Alt";
+                          } else if (key === "Control") {
+                            // Control key: show ⌃ on Mac, Alt on Windows/Linux
+                            displayKey = isMac ? "⌃" : "Alt";
                           } else if (key === "Delete") {
                             displayKey = "Del";
                           } else if (key === "Backspace") {
@@ -256,6 +259,9 @@ export function KeyboardShortcutsDialog({
                                 displayKey = isMac ? "⌘" : "Ctrl";
                               } else if (key === "Alt") {
                                 displayKey = isMac ? "⌥" : "Alt";
+                              } else if (key === "Control") {
+                                // Control key: show ⌃ on Mac, Alt on Windows/Linux
+                                displayKey = isMac ? "⌃" : "Alt";
                               } else if (key === "Delete") {
                                 displayKey = "Del";
                               } else if (key === "Backspace") {
